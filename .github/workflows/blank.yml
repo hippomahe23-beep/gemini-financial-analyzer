@@ -7,126 +7,103 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 </head>
-<body class="bg-[#0b0f1a] text-slate-200 min-h-screen font-sans">
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans">
 
     <div class="max-w-5xl mx-auto px-4 py-8">
         <div class="flex flex-col md:flex-row justify-between items-center mb-10 border-b border-slate-800 pb-6 gap-4">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">IA</div>
-                <h1 class="text-2xl font-black tracking-tighter text-white">STRATÉGIE <span class="text-blue-500">FINANCE</span></h1>
-            </div>
-            <div class="flex flex-col items-end">
-                <input type="password" id="apiKey" placeholder="Clé API Gemini" class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-[10px] text-slate-500 mt-1 hover:text-blue-400">Obtenir une clé gratuite →</a>
-            </div>
+            <h1 class="text-2xl font-black text-blue-500 tracking-tighter">FINANCE IA STRATÉGIQUE</h1>
+            <input type="password" id="apiKey" placeholder="Clé API Gemini" class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-sm w-full md:w-64 focus:ring-2 focus:ring-blue-500 outline-none">
         </div>
 
-        <div class="bg-slate-900/50 p-1 border border-slate-800 rounded-[2rem] mb-10 shadow-2xl backdrop-blur-sm">
-            <div class="bg-slate-900 p-6 md:p-8 rounded-[1.8rem] border border-slate-700/50">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4">
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Catégorie d'Actif</label>
-                        <select id="assetType" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-5 py-4 outline-none focus:border-blue-500 text-white appearance-none cursor-pointer">
-                            <option value="Action Euronext (Paris/Bruxelles)">🇫🇷 Action Euronext</option>
-                            <option value="Action US (Nasdaq/NYSE)">🇺🇸 Wall Street (US)</option>
-                            <option value="Crypto-monnaie (Market Cap)">🚀 Crypto-monnaie</option>
-                            <option value="Obligation d'État (Yields)">📈 Obligations</option>
-                        </select>
-                    </div>
-                    <div class="md:col-span-8">
-                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Recherche (Nom ou Symbole)</label>
-                        <div class="flex flex-col md:flex-row gap-3">
-                            <input type="text" id="assetName" placeholder="Ex: LVMH, NVIDIA, BTC, OAT 10 ans..." class="flex-1 bg-slate-800 border border-slate-700 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-blue-600 transition-all text-white">
-                            <button onclick="genererAnalyse()" id="btnRun" class="bg-blue-600 hover:bg-blue-500 px-10 py-4 rounded-2xl font-bold text-white transition-all shadow-xl shadow-blue-600/20 active:scale-95">
-                                ANALYSER
-                            </button>
-                        </div>
-                    </div>
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] shadow-2xl mb-10">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Catégorie</label>
+                    <select id="assetType" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500">
+                        <option value="Action Euronext (Paris)">Action Euronext</option>
+                        <option value="Crypto Market">Crypto-monnaie</option>
+                        <option value="US Tech Market">Action US (Wall Street)</option>
+                        <option value="Obligations d'État">Obligations</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-3">Valeur (Nom ou Symbole)</label>
+                    <input type="text" id="assetName" placeholder="Ex: LVMH, BTC, NVIDIA" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500 text-white">
                 </div>
             </div>
+            <button onclick="genererAnalyse()" id="btnRun" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-xl font-bold text-lg transition-all shadow-lg shadow-blue-600/20 active:scale-95">
+                GÉNÉRER L'ANALYSE COMPLÈTE
+            </button>
         </div>
 
         <div id="loader" class="hidden text-center py-20">
-            <div class="relative inline-block">
-                <div class="w-16 h-16 border-4 border-slate-800 border-t-blue-500 rounded-full animate-spin"></div>
-                <div class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-blue-500">IA</div>
-            </div>
-            <p class="mt-6 text-slate-400 font-medium animate-pulse">Consultation des terminaux Bloomberg & Euronext...</p>
+            <div class="animate-spin inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-slate-400 italic">Analyse des flux financiers et actualités en direct...</p>
         </div>
 
         <div id="resultArea" class="hidden space-y-6">
-            <div id="reportWrapper" class="bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-200">
-                <div class="bg-slate-100 px-8 py-4 border-b border-slate-200 flex justify-between items-center">
-                    <span class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Rapport Confidentiel IA</span>
-                    <span id="currentDate" class="text-[10px] font-bold text-slate-500"></span>
+            <div id="reportWrapper" class="bg-white rounded-xl shadow-2xl overflow-hidden">
+                <div class="bg-slate-100 px-8 py-3 border-b border-slate-200 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Rapport d'Intelligence Financière
                 </div>
-                <div id="reportContent" class="p-8 md:p-12 text-slate-900 font-serif leading-relaxed text-sm md:text-base whitespace-pre-line">
+                <div id="reportContent" class="p-10 text-slate-900 font-serif leading-relaxed text-sm whitespace-pre-line">
                     </div>
             </div>
             
-            <div class="flex flex-col md:flex-row gap-4">
-                <button onclick="exportPDF()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all border border-slate-700">
-                    <span>💾</span> Sauvegarder en PDF
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button onclick="exportPDF()" class="bg-slate-800 hover:bg-slate-700 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <span>📄</span> Télécharger PDF
                 </button>
-                <button onclick="envoyerParEmail()" class="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 py-4 rounded-2xl font-bold flex items-center justify-center gap-3 transition-all border border-blue-500/30">
-                    <span>✉️</span> Envoyer par Email
+                <button onclick="envoyerParEmail()" class="bg-blue-600/10 hover:bg-blue-600/20 text-blue-400 border border-blue-500/30 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <span>📧</span> Envoyer par Email
                 </button>
             </div>
         </div>
     </div>
 
     <script>
-        document.getElementById('currentDate').innerText = new Date().toLocaleString('fr-FR', { dateStyle: 'full' });
-
         async function genererAnalyse() {
             const key = document.getElementById('apiKey').value;
             const asset = document.getElementById('assetName').value;
             const type = document.getElementById('assetType').value;
             
-            if (!key || !asset) {
-                alert("Erreur : Veuillez renseigner votre clé API Gemini et l'actif à analyser.");
-                return;
-            }
+            if (!key || !asset) return alert("Clé API et Nom de l'actif requis.");
 
             const btn = document.getElementById('btnRun');
-            const loader = document.getElementById('loader');
-            const resultArea = document.getElementById('resultArea');
-
             btn.disabled = true;
-            loader.classList.remove('hidden');
-            resultArea.classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
 
-            const prompt = `Tu es un analyste financier expert. Analyse l'actif suivant : ${asset} (${type}). 
-            IMPORTANT : Tu ne dois JAMAIS utiliser la mention "N/A". Si une donnée précise manque, utilise tes connaissances actuelles pour donner une tendance ou un chiffre estimé réaliste.
-            
-            Structure ton rapport exactement comme ceci :
+            const prompt = `Analyse stratégique de : ${asset} (${type}). 
+            Interdiction d'utiliser "N/A". Utilise les données actuelles du marché.
+            Rédige exactement selon cette structure :
             
             Bonjour, Voici l'analyse stratégique complète pour ${asset} :
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             📊 SYNTHÈSE EXÉCUTIVE
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            🏢 Entreprise : [Nom précis de l'entité]
-            📈 Signal : [ACHAT / VENTE / CONSERVER]
-            ⭐ Score : [Note sur 10]
-            💭 Sentiment : [Bullish / Bearish / Neutre]
-            🎯 Confiance : [Pourcentage]%
-            ⚠️ Niveau de Risque : [Faible / Modéré / Critique]
+            🏢 Entreprise : [Nom]
+            📈 Signal : [Achat/Vente/Neutre]
+            ⭐ Score : [Note/10]
+            💭 Sentiment : [Sentiment]
+            🎯 Confiance : [X]%
+            ⚠️ Niveau de Risque : [Niveau]
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             💰 ANALYSE DE VALORISATION
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            [Donne ici le prix récent, le P/E ratio ou la capitalisation, et analyse si l'actif est surévalué ou non]
+            [Prix récent, capitalisation et analyse financière]
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            🔮 PRÉVISION COURT TERME (7 JOURS)
+            🔮 PRÉVISION COURT TERME
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            [Analyse basée sur les dernières news Euronext ou Macro-économie]
+            [Tendance 7 jours basée sur les news d'aujourd'hui]
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            ⚡ RISQUES & OPPORTUNITÉS DISRUPTIFS
+            ⚡ RISQUES & OPPORTUNITÉS
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            [Concurrence, IA, Régulation ou événements géopolitiques]
+            [Facteurs de risque et concurrence]
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            🧠 RAISONNEMENT STRATÉGIQUE DÉTAILLÉ
+            🧠 RAISONNEMENT DÉTAILLÉ
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-            [Une synthèse de 5 lignes expliquant pourquoi ce signal a été choisi]
+            [Synthèse stratégique finale de 4 lignes]
             ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
             Cette analyse a été générée automatiquement par notre système d'intelligence financière.`;
 
@@ -138,41 +115,29 @@
                 });
 
                 const data = await response.json();
-                
-                if (data.error) throw new Error(data.error.message);
-
-                const resultText = data.candidates[0].content.parts[0].text;
-                document.getElementById('reportContent').innerText = resultText;
-                resultArea.classList.remove('hidden');
-                
-            } catch (error) {
-                alert("Erreur : " + error.message);
+                document.getElementById('reportContent').innerText = data.candidates[0].content.parts[0].text;
+                document.getElementById('resultArea').classList.remove('hidden');
+            } catch (e) {
+                alert("Erreur d'API. Vérifiez votre clé.");
             } finally {
                 btn.disabled = false;
-                loader.classList.add('hidden');
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                document.getElementById('loader').classList.add('hidden');
             }
         }
 
         function exportPDF() {
             const element = document.getElementById('reportWrapper');
-            const asset = document.getElementById('assetName').value || 'Analyse';
-            const opt = {
-                margin: 0.5,
-                filename: `Analyse_${asset}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 3, useCORS: true },
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
+            html2pdf().from(element).set({
+                margin: 10,
+                filename: 'Analyse_Financiere.pdf',
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).save();
         }
 
         function envoyerParEmail() {
             const content = document.getElementById('reportContent').innerText;
-            const asset = document.getElementById('assetName').value;
-            const subject = encodeURIComponent(`Analyse Stratégique : ${asset}`);
-            const body = encodeURIComponent(content);
-            window.location.href = `mailto:?subject=${subject}&body=${body}`;
+            window.location.href = `mailto:?subject=Analyse Financiere&body=${encodeURIComponent(content)}`;
         }
     </script>
 </body>
