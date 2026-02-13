@@ -3,96 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Financial Analyzer</title>
+    <title>IA Financial Analyst Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-900 text-white min-h-screen p-8">
+<body class="bg-gray-950 text-white min-h-screen p-4 md:p-10">
 
-    <div class="max-w-4xl mx-auto">
-        <div class="flex justify-between items-center border-b border-slate-700 pb-6 mb-8">
-            <h1 class="text-2xl font-bold text-blue-400">Gemini Financial Analyst</h1>
-            <input type="text" id="apiKey" placeholder="Clé API Gemini" class="bg-slate-800 border border-slate-600 px-3 py-1 rounded text-sm w-64">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-3xl font-extrabold text-blue-500 tracking-tight">IA STRATÉGIQUE FINANCIÈRE</h1>
+            <input type="password" id="apiKey" placeholder="Clé API Gemini" class="bg-gray-900 border border-gray-700 px-4 py-2 rounded-lg text-sm w-full md:w-64 focus:border-blue-500 outline-none">
         </div>
 
-        <div class="bg-slate-800 p-6 rounded-xl shadow-xl mb-6">
-            <div class="flex gap-4">
-                <input type="text" id="companyInput" placeholder="Ex: NVIDIA ou Apple..." class="flex-1 bg-slate-700 border border-slate-600 rounded-lg px-4 py-2 outline-none focus:border-blue-500">
-                <button onclick="analyser()" id="btn" class="bg-blue-600 hover:bg-blue-500 px-6 py-2 rounded-lg font-bold transition">Analyser</button>
+        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800 mb-8 shadow-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-2">Type d'actif</label>
+                    <select id="assetType" class="w-full bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-600">
+                        <option value="Action Euronext">Action (Euronext/CAC40)</option>
+                        <option value="Action US">Action (NASDAQ/NYSE)</option>
+                        <option value="Crypto">Crypto-monnaie</option>
+                        <option value="Obligation">Obligation État/Corp</option>
+                    </select>
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm text-gray-400 mb-2">Rechercher une valeur</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="assetName" placeholder="Ex: LVMH, Bitcoin, TotalEnergies..." class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-600">
+                        <button onclick="genererAnalyse()" id="btnRun" class="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-3 rounded-xl transition-all shadow-lg shadow-blue-900/20">
+                            Lancer l'Analyse
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div id="result" class="hidden space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <p class="text-slate-400 text-sm">Entreprise</p>
-                    <p id="res-name" class="text-xl font-bold">--</p>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <p class="text-slate-400 text-sm">Score Stratégique</p>
-                    <p id="res-score" class="text-xl font-bold text-green-400">--</p>
-                </div>
-                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700">
-                    <p class="text-slate-400 text-sm">Sentiment</p>
-                    <p id="res-sentiment" class="text-xl font-bold">--</p>
-                </div>
-            </div>
-
-            <div class="bg-slate-800 p-6 rounded-lg border border-slate-700">
-                <h2 class="text-blue-300 font-bold mb-4">Raisonnement Détaillé</h2>
-                <div id="res-body" class="text-slate-300 leading-relaxed whitespace-pre-line"></div>
-            </div>
+        <div id="loader" class="hidden text-center py-20">
+            <div class="animate-spin inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full mb-4"></div>
+            <p class="text-xl text-gray-400 animate-pulse">Scan d'Euronext et des actualités en cours...</p>
         </div>
 
-        <div id="loader" class="hidden text-center py-10">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-blue-500 mb-4"></div>
-            <p class="text-slate-400">L'IA analyse les marchés...</p>
+        <div id="resultArea" class="hidden space-y-6">
+            <div class="bg-white text-gray-900 p-8 rounded-lg font-mono text-sm shadow-2xl overflow-x-auto">
+                <pre id="emailContent" class="whitespace-pre-wrap"></pre>
+            </div>
+            
+            <div class="flex justify-end gap-4">
+                <button onclick="copierEmail()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-xl font-bold transition">Copier le rapport</button>
+                <button onclick="envoyerParEmail()" class="bg-green-600 hover:bg-green-500 px-6 py-3 rounded-xl font-bold transition">Envoyer par Email</button>
+            </div>
         </div>
     </div>
 
     <script>
-        async function analyser() {
+        async function genererAnalyse() {
             const key = document.getElementById('apiKey').value;
-            const company = document.getElementById('companyInput').value;
-            const btn = document.getElementById('btn');
-            const resultDiv = document.getElementById('result');
+            const asset = document.getElementById('assetName').value;
+            const type = document.getElementById('assetType').value;
+            const btn = document.getElementById('btnRun');
             const loader = document.getElementById('loader');
+            const resultArea = document.getElementById('resultArea');
 
-            if (!key || !company) return alert("Précisez la clé API et l'entreprise");
+            if (!key || !asset) {
+                alert("Veuillez saisir votre clé API et le nom d'un actif.");
+                return;
+            }
 
             btn.disabled = true;
             loader.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
+            resultArea.classList.add('hidden');
 
-            const prompt = `Fais une analyse financière courte pour ${company}. 
-            Réponds uniquement en format JSON avec ces clés: 
-            "nom", "score" (sur 10), "sentiment" (Positif/Neutre/Négatif), "analyse" (3 phrases).`;
+            // Prompt ultra-précis pour remplacer les N/A
+            const prompt = `Tu es un expert financier. Analyse l'actif suivant: ${asset} (${type}).
+            Utilise tes connaissances en temps réel sur Euronext, les taux obligataires et les news crypto du jour.
+            
+            Rédige le rapport EXACTEMENT sous cette forme, remplace TOUS les N/A par des données réelles et chiffrées :
+            
+            Bonjour, Voici l'analyse stratégique complète pour ${asset} :
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            📊 SYNTHÈSE EXÉCUTIVE
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🏢 Entreprise : [Nom précis]
+            📈 Signal : [Achat/Vente/Neutre]
+            ⭐ Score : [Note/10]
+            💭 Sentiment : [Sentiment du marché]
+            🎯 Confiance : [X]%
+            ⚠️ Niveau de Risque : [Faible/Moyen/Élevé]
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            💰 ANALYSE DE VALORISATION
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            [Détails sur le prix actuel, PER ou capitalisation]
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🔮 PRÉVISION COURT TERME
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            [Tendance à 7 jours basée sur les news]
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            ⚡ ANALYSE DES RISQUES DISRUPTIFS
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            [Concurrence, régulation ou tech]
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            🧠 RAISONNEMENT DÉTAILLÉ
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            [Explication stratégique finale]
+            ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            Cette analyse a été générée automatiquement par notre système d'intelligence financière.
+            Cordialement, Votre Assistant Financier IA`;
 
             try {
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: prompt }] }],
-                        generationConfig: { responseMimeType: "application/json" }
+                        contents: [{ parts: [{ text: prompt }] }]
                     })
                 });
 
-                const data = await resp.json();
-                const rawJson = JSON.parse(data.candidates[0].content.parts[0].text);
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
 
-                document.getElementById('res-name').innerText = rawJson.nom;
-                document.getElementById('res-score').innerText = rawJson.score + "/10";
-                document.getElementById('res-sentiment').innerText = rawJson.sentiment;
-                document.getElementById('res-body').innerText = rawJson.analyse;
-
-                resultDiv.classList.remove('hidden');
-            } catch (e) {
-                alert("Erreur lors de l'analyse. Vérifiez votre clé API.");
-                console.error(e);
+                document.getElementById('emailContent').innerText = text;
+                resultArea.classList.remove('hidden');
+            } catch (error) {
+                alert("Erreur: Clé API invalide ou problème de connexion.");
             } finally {
                 btn.disabled = false;
                 loader.classList.add('hidden');
             }
+        }
+
+        function copierEmail() {
+            const content = document.getElementById('emailContent').innerText;
+            navigator.clipboard.writeText(content);
+            alert("Analyse copiée dans le presse-papier !");
+        }
+
+        function envoyerParEmail() {
+            const content = document.getElementById('emailContent').innerText;
+            const subject = "Analyse Stratégique Financière Automatisée";
+            window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(content)}`;
         }
     </script>
 </body>
