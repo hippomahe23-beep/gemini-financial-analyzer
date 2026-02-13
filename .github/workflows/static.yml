@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IA Financial Terminal | Pro</title>
+
+  <!-- Tailwind via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- html2pdf -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+
+<body class="bg-[#020617] text-slate-300 min-h-screen font-sans selection:bg-blue-500/30">
+
+  <div class="max-w-5xl mx-auto px-6 py-10">
+    <header class="flex flex-col md:flex-row justify-between items-center mb-12 border-b border-slate-800 pb-8 gap-6">
+      <div class="text-center md:text-left">
+        <h1 class="text-4xl font-black text-white tracking-tighter italic">
+          FINANCE<span class="text-blue-500">GPT</span>
+        </h1>
+        <p class="text-slate-500 text-[10px] font-bold uppercase tracking-[0.4em] mt-2">
+          Système d'Analyse Stratégique
+        </p>
+      </div>
+
+      <div class="relative w-full md:w-auto">
+        <input
+          type="password"
+          id="apiKey"
+          placeholder="CLÉ API GEMINI"
+          class="bg-slate-900/80 border border-slate-800 px-5 py-3 rounded-2xl text-xs font-mono text-blue-400 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 transition-all w-full md:w-72"
+          autocomplete="off"
+          spellcheck="false"
+        />
+      </div>
+    </header>
+
+    <main class="bg-slate-900/40 border border-slate-800 p-1 rounded-[2.5rem] shadow-2xl backdrop-blur-xl mb-12">
+      <div class="bg-slate-950 p-8 rounded-[2.3rem] border border-slate-800/50">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+          <div class="md:col-span-5">
+            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-2">
+              Secteur de Marché
+            </label>
+            <select
+              id="assetType"
+              class="w-full bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 outline-none focus:border-blue-500 text-slate-200 font-bold appearance-none cursor-pointer"
+            >
+              <option value="Euronext Paris (CAC40/SBF120)">🇫🇷 Actions Euronext</option>
+              <option value="Wall Street (NASDAQ/NYSE)">🇺🇸 Actions US</option>
+              <option value="Crypto-monnaies (Global)">🚀 Crypto & Web3</option>
+              <option value="Marché Obligataire (Souverain)">📈 Obligations</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-7">
+            <label class="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 ml-2">
+              Actif Cible
+            </label>
+            <div class="flex flex-col md:flex-row gap-4">
+              <input
+                type="text"
+                id="assetName"
+                placeholder="Ex: LVMH, NVIDIA, BTC..."
+                class="flex-1 bg-slate-900 border border-slate-800 rounded-2xl px-6 py-4 outline-none focus:ring-2 focus:ring-blue-600 text-white font-bold"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button
+                type="button"
+                onclick="lancerAnalyse()"
+                id="btnRun"
+                class="bg-blue-600 hover:bg-blue-500 px-10 py-4 rounded-2xl font-black text-white uppercase tracking-tighter transition-all hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                ANALYSER
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Loader : classes Tailwind standard uniquement (pas "animate-in fade-in zoom-in") -->
+    <div id="loader" class="hidden text-center py-20">
+      <div class="inline-block w-16 h-16 border-[6px] border-slate-800 border-t-blue-500 rounded-full animate-spin mb-6"></div>
+      <p class="text-slate-400 font-bold uppercase tracking-[0.3em] text-[10px]">
+        Interrogation des serveurs de données...
+      </p>
+    </div>
+
+    <div id="resultArea" class="hidden">
+      <div id="reportContainer" class="bg-white rounded-3xl shadow-2xl overflow-hidden mb-10 border border-slate-200">
+        <div class="bg-slate-50 px-10 py-5 border-b border-slate-200 flex justify-between items-center">
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Document Financier Officiel</span>
+          <span id="dateStamp" class="text-[10px] font-bold text-slate-600 uppercase"></span>
+        </div>
+
+        <div
+          id="reportContent"
+          class="p-10 md:p-20 text-slate-900 font-serif leading-[1.9] text-base md:text-lg whitespace-pre-line"
+        ></div>
+      </div>
+
+      <div class="flex flex-col md:flex-row gap-4">
+        <button
+          type="button"
+          onclick="exportPDF()"
+          class="flex-1 bg-slate-900 hover:bg-black text-white py-5 rounded-2xl font-black uppercase text-xs tracking-widest transition-all"
+        >
+          📄 Télécharger PDF
+        </button>
+        <button
+          type="button"
+          onclick="envoyerEmail()"
+          class="flex-1 bg-blue-600/10 hover:bg-blue-600/20 text-blue-600 py-5 rounded-2xl font-black uppercase text-xs tracking-widest border border-blue-600/20 transition-all"
+        >
+          ✉️ Envoyer par Email
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function $(id) {
+      return document.getElementById(id);
+    }
+
+    function safeFilename(input) {
+      // retire caractères interdits Windows/macOS + trim + fallback
+      const name = (input || "").trim() || "ACTIF";
+      return name.replace(/[\\/:*?"<>|]+/g, "_").replace(/\s+/g, "_").slice(0, 80);
+    }
+
+    function setLoading(isLoading) {
+      const btn = $("btnRun");
+      btn.disabled = isLoading;
+      $("loader").classList.toggle("hidden", !isLoading);
+    }
+
+    function showResult(show) {
+      $("resultArea").classList.toggle("hidden", !show);
+    }
+
+    function setReportText(text) {
+      $("reportContent").innerText = text || "";
+    }
+
+    function setDateStamp() {
+      $("dateStamp").innerText = new Date().toLocaleDateString("fr-FR", { dateStyle: "full" });
+    }
+
+    async function lancerAnalyse() {
+      const key = ($("apiKey").value || "").trim();
+      const asset = ($("assetName").value || "").trim();
+      const type = $("assetType").value;
+
+      if (!key || !asset) {
+        alert("Paramètres manquants : Clé API ou Nom de l'actif.");
+        return;
+      }
+
+      setLoading(true);
+      showResult(false);
+      setDateStamp();
+      setReportText("");
+
+      const prompt = `Tu es un analyste de haut niveau. Analyse : ${asset} (${type}).
+INTERDICTION de répondre "N/A". Si une donnée est inconnue, fais une estimation basée sur les dernières tendances de marché.
+Rédige le rapport suivant ce format strict :
+
+Bonjour, Voici l'analyse stratégique complète pour ${asset} :
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 SYNTHÈSE EXÉCUTIVE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🏢 Entreprise : [Nom exact]
+📈 Signal : [ACHAT / VENTE / NEUTRE]
+⭐ Score : [Note/10]
+💭 Sentiment : [Sentiment]
+🎯 Confiance : [X]%
+⚠️ Niveau de Risque : [Risque]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💰 VALORISATION & PRIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Prix récent, Capitalisation et analyse de la valeur actuelle]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 PRÉVISION 7 JOURS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Analyse prédictive basée sur les actualités récentes]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚡ FACTEURS DISRUPTIFS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Risques macro, technologiques ou réglementaires]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🧠 SYNTHÈSE FINALE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Explication stratégique en 5 lignes]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Généré automatiquement par IA Financial Terminal.`;
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${encodeURIComponent(
+          key
+        )}`;
+
+        // Timeout simple (30s)
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            // Optionnel : réglages de génération
+            generationConfig: {
+              temperature: 0.6,
+              topP: 0.9,
+              maxOutputTokens: 1400
+            }
+          })
+        });
+
+        clearTimeout(timeout);
+
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Réponse invalide (JSON non lisible).");
+        }
+
+        // Gestion erreurs HTTP / API
+        if (!response.ok) {
+          const msg = data?.error?.message || `Erreur HTTP ${response.status}`;
+          throw new Error(msg);
+        }
+
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) {
+          // Certains retours peuvent contenir des blocs différents ou être filtrés
+          const fallback = JSON.stringify(data, null, 2);
+          throw new Error(
+            "Aucun contenu exploitable retourné par l'API. Détails:\n" + fallback.slice(0, 1200)
+          );
+        }
+
+        setReportText(text);
+        showResult(true);
+      } catch (error) {
+        const message =
+          error?.name === "AbortError"
+            ? "Timeout : l'API ne répond pas (30s)."
+            : (error?.message || "Impossible de joindre l'API. Vérifiez votre clé.");
+        alert("Erreur : " + message);
+      } finally {
+        setLoading(false);
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }
+    }
+
+    function exportPDF() {
+      const asset = ($("assetName").value || "").trim();
+      const element = $("reportContainer");
+
+      if (!element) {
+        alert("Erreur : zone de rapport introuvable.");
+        return;
+      }
+
+      const filename = `RAPPORT_${safeFilename(asset)}.pdf`;
+
+      html2pdf()
+        .from(element)
+        .set({
+          margin: 10,
+          filename,
+          html2canvas: { scale: 3 },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" }
+        })
+        .save();
+    }
+
+    function envoyerEmail() {
+      const content = ($("reportContent").innerText || "").trim();
+      const asset = ($("assetName").value || "").trim();
+
+      if (!content) {
+        alert("Aucun rapport à envoyer.");
+        return;
+      }
+
+      const subject = `Analyse IA : ${asset || "Actif"}`;
+      const body = encodeURIComponent(content);
+      window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${body}`;
+    }
+  </script>
+</body>
+</html>
